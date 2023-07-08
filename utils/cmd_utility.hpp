@@ -32,7 +32,7 @@ namespace utility
 			si.hStdError = hWritePipe;
 			si.hStdOutput = hWritePipe;
 			//隐藏命令行窗口
-			si.wShowWindow = SW_SHOW;
+			si.wShowWindow = SW_HIDE;
 			si.dwFlags = STARTF_USESHOWWINDOW | STARTF_USESTDHANDLES;
 
 			auto buffer_len = strlen(szCmd) + 1;
