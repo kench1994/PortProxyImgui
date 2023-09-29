@@ -8,3 +8,5 @@ build/
 vsxmake*
 
 .vscode
+
+.vs

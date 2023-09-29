@@ -145,6 +145,9 @@ int main(int, char**)
 
     };
 
+    auto spSamePortMode = std::make_shared<bool>();
+    *spSamePortMode = true;
+
     // Main loop
     bool done = false;
     while (!done)
@@ -273,16 +276,23 @@ int main(int, char**)
         }
         if (show_add_windows)
         {
-            ImGui::Begin("添加窗口", &show_add_windows, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_AlwaysAutoResize);   // Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)
-            static char listen_port[32] {0x00},
-                        listen_port_end[32] {0x00},
-                        downstream_server[32] {0x00},
-                        downstream_port[32] {0x00},
+            static char listen_port[32]         {0x00},
+                        listen_port_end[32]     {0x00},
+                        downstream_server[32]   {0x00},
+                        downstream_port[32]     {0x00},
                         downstream_port_end[32] {0x00};
+
+            ImGui::Begin("添加窗口", &show_add_windows, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_AlwaysAutoResize);   // Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)
             ImGui::PushItemWidth(60);
-            ImGui::InputText("监听端口 -", listen_port, IM_ARRAYSIZE(listen_port), ImGuiInputTextFlags_CharsDecimal);
+            if(ImGui::InputText("监听端口 -", listen_port, IM_ARRAYSIZE(listen_port), ImGuiInputTextFlags_CharsDecimal) && *spSamePortMode)
+            {
+                strcpy_s(downstream_port, sizeof(downstream_port), listen_port);
+            }
             ImGui::SameLine();
-            ImGui::InputText("结束端口", listen_port_end, IM_ARRAYSIZE(listen_port_end), ImGuiInputTextFlags_CharsDecimal);
+            if(ImGui::InputText("结束端口", listen_port_end, IM_ARRAYSIZE(listen_port_end), ImGuiInputTextFlags_CharsDecimal))
+            {
+                strcpy_s(downstream_port_end, sizeof(downstream_port_end), listen_port_end);
+            }
 
             ImGui::PushItemWidth(185);
             ImGui::InputText("下游服务器IP", downstream_server, IM_ARRAYSIZE(downstream_server), ImGuiInputTextFlags_CharsDecimal);
@@ -292,7 +302,14 @@ int main(int, char**)
             ImGui::SameLine();
             ImGui::InputText("尾部端口", downstream_port_end, IM_ARRAYSIZE(downstream_port_end), ImGuiInputTextFlags_CharsDecimal);
             ImGui::PopItemWidth();
-
+            if(ImGui::Checkbox("上下游端口一致", spSamePortMode.get()))
+            {
+                if(*spSamePortMode = *spSamePortMode ? true : false)
+                {
+                    strcpy_s(downstream_port, sizeof(downstream_port), listen_port);
+                    strcpy_s(downstream_port, sizeof(downstream_port), listen_port);
+                }
+            }
             ImGui::PushItemWidth(120);
             static std::string strErrOnAdd;
             //warning text line
@@ -303,7 +320,10 @@ int main(int, char**)
                 ImGui::PopStyleColor();
             }
             else
+            {
                 ImGui::LabelText("", "");
+            }
+
             ImGui::LabelText("", "");//place hold line
             ImGui::SameLine();
             ImGui::PopItemWidth();
@@ -316,7 +336,7 @@ int main(int, char**)
                         strErrOnAdd = "缺失关键参数";
                         break;
                     }
-                    auto listen_begin = atoi(listen_port);
+                    auto listen_begin =  atoi(listen_port);
                     auto forward_begin = atoi(downstream_port);
                     auto listen_end = listen_begin;
                     auto forward_end = forward_begin;

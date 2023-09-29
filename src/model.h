@@ -22,6 +22,7 @@ namespace port_proxy
 			uint16_t uOutPort = 0;
 			char szOutAddress[64] {0x00};
 		}Rule;
+		
 		using RuleList_t = std::list<std::shared_ptr<Rule>>;
 	}
 }
