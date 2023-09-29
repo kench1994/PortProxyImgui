@@ -16,6 +16,7 @@
 #include <thread>
 #include <chrono>
 #include <iostream>
+
 #ifdef _DEBUG
 #define DX12_ENABLE_DEBUG_LAYER
 #endif
@@ -26,6 +27,7 @@
 #endif
 
 #include "control.h"
+#include "../utils/string_utility.hpp"
 #include <vector>
 
 struct FrameContext
@@ -128,7 +130,8 @@ int main(int, char**)
     bool show_main_window = true, show_add_windows = false;
     ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
 
-
+	
+	std::list<const char*> vTableHeaders { "选择", "上游服务器", "下游服务器", "模式" };
     port_proxy::model::RuleList_t vRuleList;
     port_proxy::control::instance().list(vRuleList);
 
@@ -172,11 +175,11 @@ int main(int, char**)
 
         if (ImGui::Begin("PortProxy", &show_main_window, window_flags))
         {
-            if (ImGui::BeginTable("table_padding", 3, ImGuiTableFlags_SizingStretchProp))
+            if (ImGui::BeginTable("table_padding", 4, ImGuiTableFlags_SizingStretchProp))
             {
                 {
                     int col = 0;
-                    for (const auto& iter : { "选择", "监听端口", "下游服务器" })
+                    for (const auto& iter : vTableHeaders)
                     {
                         switch (col++)
                         {
@@ -186,9 +189,14 @@ int main(int, char**)
                         case 1:
                             ImGui::TableSetupColumn(iter, ImGuiTableColumnFlags_WidthFixed, 100);
                             break;
-                        default:
+                        case 2:
                             ImGui::TableSetupColumn(iter, ImGuiTableColumnFlags_WidthFixed, 200);
                             break;
+						case 3:
+							ImGui::TableSetupColumn(iter, ImGuiTableColumnFlags_WidthFixed, 100);
+							break;
+						default:
+							break;
                         }
                     }
                 }
@@ -198,7 +206,7 @@ int main(int, char**)
                 for (const auto& spRule : vRuleList)
                 {
                     ImGui::TableNextRow();
-                    for (int column = 0; column < 3; column++)
+                    for (int column = 0; column < 4; column++)
                     {
                         ImGui::TableSetColumnIndex(column);
                         switch (column)
@@ -208,11 +216,14 @@ int main(int, char**)
                                 *vChkList[row] = *vChkList[row] ? true : false;
                             break;
                         case 1:
-                            ImGui::Text("%" PRIu16, spRule->uInPort);
+							ImGui::Text("%s:%" PRIu16, spRule->szInAddress, spRule->uInPort);
                             break;
                         case 2:
                             ImGui::Text("%s:%" PRIu16, spRule->szOutAddress, spRule->uOutPort);
                             break;
+						case 3:
+							ImGui::Text("v%c->v%c", spRule->chInIPvN, spRule->chOutIPvN);
+							break;
                         default:
                             break;
                         }
@@ -225,10 +236,10 @@ int main(int, char**)
 
             {
                 static std::string strErrOnDel;
-                ImGui::PushItemWidth(100);
+                ImGui::PushItemWidth(300);
                 ImGui::LabelText("", "");
                 ImGui::NewLine();
-                if(strErrOnDel.length())
+                if(!strErrOnDel.empty())
                 {
                     ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(255,0,0,255));
                     ImGui::Text(strErrOnDel.c_str());
@@ -257,7 +268,8 @@ int main(int, char**)
                             port_proxy::control::instance().deleteRule(spRule, strErrInfo);
                             if(strcmp(strErrInfo.c_str(), "\r\n"))
                             {
-                                strErrOnDel = strErrInfo;
+								strErrOnDel = utility::str::gbk_to_utf8(strErrInfo);
+								utility::str::strip_last(strErrOnDel, { '\n', '\r' });
                                 break;
                             }
                         }
@@ -313,7 +325,7 @@ int main(int, char**)
             ImGui::PushItemWidth(120);
             static std::string strErrOnAdd;
             //warning text line
-            if(strErrOnAdd.length())
+            if(!strErrOnAdd.empty())
             {
                 ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(255,0,0,255));
                 ImGui::Text(strErrOnAdd.c_str());
@@ -366,7 +378,8 @@ int main(int, char**)
                         port_proxy::control::instance().addRule(spRule, strErrInfo);
                         if(strcmp(strErrInfo.c_str(), "\r\n"))
                         {
-                            strErrOnAdd = strErrInfo;
+							strErrOnAdd = utility::str::gbk_to_utf8(strErrInfo);
+							utility::str::strip_last(strErrOnAdd, {'\n', '\r'});
                             break;
                         }
                         strErrOnAdd = "添加成功";

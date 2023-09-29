@@ -30,8 +30,8 @@ bool control::list(RuleList_t& vRuleList)
 	if (vLineList.empty())
 		return false;
 	
-	//ipvx -> ipvx state
-	std::pair<char, char> pairIPvXtoY;
+	// 默认状态机
+	char chIn = '4', chOut = '4';
 
 	for (auto& iter = vLineList.begin(); iter != vLineList.end(); iter++)
 	{
@@ -39,22 +39,21 @@ bool control::list(RuleList_t& vRuleList)
 		utility::str::ssplit(*iter, vCols, " ");
 		if(!strncmp(vCols[1].c_str(), "ipv", strlen("ipv")))
 		{
-			char chIn = '4', chOut = '4';
 			if (!strncmp(vCols[1].c_str(), "ipv6:", strlen("ipv6:")))
 				chIn = '6';
 			if (!strncmp(vCols[3].c_str(), "ipv6:", strlen("ipv6:")))
 				chOut = '6';
-			pairIPvXtoY = std::make_pair(chIn, chOut);
 			++iter;
 			continue;
 		}
 		
 		auto spRule = std::make_shared<Rule>();
-		//spRule->chInIPvN = pairIPvXtoY.first;
+
+		spRule->chInIPvN = chIn;
 		sprintf_s(spRule->szInAddress, sizeof(spRule->szInAddress) - 1, vCols[0].c_str());
 		spRule->uInPort = atoi(vCols[1].c_str());
 
-		//spRule->chOutIPvN = pairIPvXtoY.second;
+		spRule->chOutIPvN = chOut;
 		spRule->uOutPort = atoi(vCols[3].c_str());
 		sprintf_s(spRule->szOutAddress, sizeof(spRule->szOutAddress) - 1, vCols[2].c_str());
 
